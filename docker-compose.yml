@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: douaesr/douaes-bookshop
     container_name: bookshop_app
     env_file:
       - .env
