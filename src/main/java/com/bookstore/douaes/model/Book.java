@@ -37,5 +37,6 @@ public class Book {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties("books") // ignore la liste des livres pour éviter la boucle infinie
     private Category category;
 }
