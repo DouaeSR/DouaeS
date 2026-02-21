@@ -7,6 +7,8 @@ import com.bookstore.douaes.service.AdminService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/books")
 public class AdminController {
@@ -15,6 +17,11 @@ public class AdminController {
 
     public AdminController(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
+    }
+
+    @GetMapping
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
     }
 
     @PostMapping

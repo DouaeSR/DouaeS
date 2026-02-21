@@ -1,5 +1,6 @@
 package com.bookstore.douaes.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import lombok.ToString.Exclude;
 import jakarta.persistence.*;
@@ -21,5 +22,6 @@ public class Category {
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @ToString.Exclude
+    @JsonIgnore
     private List<Book> books;
 }
