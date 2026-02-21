@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    container_name: bookshop_app
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    # Let container reach host services (MySQL on host:3306)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
