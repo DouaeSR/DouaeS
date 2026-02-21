@@ -124,7 +124,7 @@ jobs:
 
             # health check retry (up to ~30s)
             for i in {1..15}; do
-              if curl -fsS http://localhost:8080/api/public/categories > /dev/null; then
+              if curl -fsS http://localhost:8086/api/public/categories > /dev/null; then
                 echo "✅ Health check OK"
                 exit 0
               fi
