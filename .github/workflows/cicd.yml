@@ -31,7 +31,7 @@ jobs:
       DB_NAME: bookshop_douaes
       DB_USER: root
       DB_PASSWORD: 1111
-      JWT_SECRET:JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
       # Also force Spring datasource in CI (prevents config/env mismatch)
       SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/bookshop_douaes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
