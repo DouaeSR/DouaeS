@@ -1,0 +1,106 @@
+name: CI-CD
+
+on:
+  pull_request:
+    branches: [ "dev" ]
+  push:
+    branches: [ "dev", "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 1111
+          MYSQL_DATABASE: bookshop_douaes
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -uroot -p1111 --silent"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+
+    env:
+      # Your app env style (kept)
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: bookshop_douaes
+      DB_USER: root
+      DB_PASSWORD: 1111
+
+      # Also force Spring datasource in CI (prevents config/env mismatch)
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/bookshop_douaes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1111
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if docker exec ${{ job.services.mysql.id }} mysqladmin ping -uroot -p1111 --silent; then
+              echo "✅ MySQL is up"
+              exit 0
+            fi
+            echo "Waiting MySQL... ($i)"
+            sleep 2
+          done
+          echo "❌ MySQL failed to start"
+          docker logs ${{ job.services.mysql.id }}
+          exit 1
+
+      - name: Build + tests
+        run: |
+          chmod +x mvnw
+          ./mvnw clean test
+
+      - name: Build Docker image (requirement)
+        run: docker build -t bookshop:ci .
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH (git pull + docker compose up)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd /home/${{ secrets.CHEF_PROJET }}/bookshop
+
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
+
+            docker compose up -d --build
+
+            # health check retry (up to ~30s)
+            for i in {1..15}; do
+              if curl -fsS http://localhost:8080/api/public/categories > /dev/null; then
+                echo "✅ Health check OK"
+                exit 0
+              fi
+              echo "Waiting for app... ($i)"
+              sleep 2
+            done
+
+            echo "❌ Health check failed"
+            docker compose logs --no-color --tail=200
+            exit 1
