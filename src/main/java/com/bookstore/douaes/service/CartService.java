@@ -29,6 +29,7 @@ public class CartService {
         item.setBook(book);
         item.setUser(user);
         item.setQuantity(quantity);
+        item.setUnitPrice(book.getPrice()); // <-- set the unit price from the book
         return cartRepository.save(item);
     }
 
