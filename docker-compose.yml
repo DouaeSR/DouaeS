@@ -1,0 +1,8 @@
+services:
+  app:
+    image: douaesr/douaes-bookshop
+    container_name: bookshop_app
+    env_file:
+      - .env
+    network_mode: "host"
+    restart: unless-stopped
