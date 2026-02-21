@@ -1,7 +1,8 @@
 package com.bookstore.douaes.model;
 
-import lombok.*;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.util.List;
 
 @Entity
