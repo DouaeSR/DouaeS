@@ -65,6 +65,19 @@ jobs:
           ./mvnw -e clean test
 
       # ---- Docker Hub push (ONLY on main pushes) ----
+      - name: Validate Docker Hub secrets
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
+            echo "❌ Missing DOCKERHUB_USERNAME secret"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "❌ Missing DOCKERHUB_TOKEN secret"
+            exit 1
+          fi
+          echo "✅ Docker Hub secrets look set"
+
       - name: Set up Docker Buildx
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/setup-buildx-action@v3
@@ -83,8 +96,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPO }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/douaes-bookshop:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/douaes-bookshop:${{ github.sha }}
 
   deploy:
     if: github.ref == 'refs/heads/main'
