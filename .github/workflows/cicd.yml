@@ -25,59 +25,12 @@ jobs:
           --health-retries=30
 
     env:
-      # Your app env style (kept)
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_NAME: bookshop_douaes
       DB_USER: root
       DB_PASSWORD: 1111
 
-      # JWT secret from GitHub Actions secrets
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-
-      # Also force Spring datasource in CI (prevents config/env mismatch)
-      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/bookshop_douaes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1111
-
-name: CI-CD
-
-on:
-  pull_request:
-    branches: [ "dev" ]
-  push:
-    branches: [ "dev", "main" ]
-
-jobs:
-  build-test:
-    runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: 1111
-          MYSQL_DATABASE: bookshop_douaes
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -uroot -p1111 --silent"
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=30
-
-    env:
-      # Your app env style (kept)
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_NAME: bookshop_douaes
-      DB_USER: root
-      DB_PASSWORD: 1111
-
-      # JWT secret from GitHub Actions secrets
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-
-      # Also force Spring datasource in CI (prevents config/env mismatch)
       SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/bookshop_douaes?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 1111
@@ -106,11 +59,24 @@ jobs:
           docker logs ${{ job.services.mysql.id }}
           exit 1
 
-      # Safe debug: doesn't print the secret, only whether it exists + length
-      - name: Debug JWT_SECRET presence
+      # ✅ Force JWT_SECRET to exist for tests (uses secret if available, else fallback)
+      - name: Ensure JWT_SECRET exists
+        env:
+          JWT_SECRET_FROM_SECRETS: ${{ secrets.JWT_SECRET }}
+        run: |
+          if [ -z "${JWT_SECRET_FROM_SECRETS:-}" ]; then
+            echo "JWT_SECRET=test-secret-please-change-32chars-minimum!!" >> $GITHUB_ENV
+            echo "✅ Using CI fallback JWT_SECRET"
+          else
+            echo "JWT_SECRET=$JWT_SECRET_FROM_SECRETS" >> $GITHUB_ENV
+            echo "✅ Using GitHub secret JWT_SECRET"
+          fi
+
+      - name: Debug JWT_SECRET presence (safe)
         run: |
           if [ -z "${JWT_SECRET:-}" ]; then
-            echo "❌ JWT_SECRET is EMPTY (secrets not available or misnamed)"
+            echo "❌ JWT_SECRET is STILL EMPTY"
+            exit 1
           else
             echo "✅ JWT_SECRET is set (len=${#JWT_SECRET})"
           fi
@@ -119,18 +85,6 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw -e clean test
-
-      # If tests fail, print root cause from surefire reports
-      - name: Show Surefire reports on failure
-        if: failure()
-        run: |
-          echo "=== surefire files ==="
-          ls -la target/surefire-reports || true
-          echo "=== surefire content (first 200 lines each) ==="
-          for f in target/surefire-reports/*; do
-            echo "----- $f -----"
-            sed -n '1,200p' "$f" || true
-          done
 
       - name: Build Docker image (requirement)
         run: docker build -t bookshop:ci .
@@ -157,7 +111,6 @@ jobs:
 
             docker compose up -d --build
 
-            # health check retry (up to ~30s)
             for i in {1..15}; do
               if curl -fsS http://localhost:8080/api/public/categories > /dev/null; then
                 echo "✅ Health check OK"
