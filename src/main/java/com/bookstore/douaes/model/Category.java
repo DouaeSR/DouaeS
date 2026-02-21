@@ -1,6 +1,6 @@
 package com.bookstore.douaes.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.ToString.Exclude;
 import jakarta.persistence.*;
@@ -22,6 +22,6 @@ public class Category {
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @ToString.Exclude
-    @JsonIgnore
+    @JsonIgnoreProperties("category") // ignore la catégorie dans chaque livre
     private List<Book> books;
 }
