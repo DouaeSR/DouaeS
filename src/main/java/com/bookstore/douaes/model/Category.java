@@ -1,11 +1,8 @@
-package com.bookstore.douaes;
+package com.bookstore.douaes.model;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.*;
 import lombok.ToString.Exclude;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
