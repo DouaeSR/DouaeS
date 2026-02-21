@@ -1,11 +1,12 @@
-package com.bookstore.douaes;
+package com.bookstore.douaes.model;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import javax.persistence.*;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.util.List;
+import lombok.ToString.*;
+
+
 
 @Entity
 @Table(name = "users")
