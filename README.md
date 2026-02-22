@@ -18,9 +18,9 @@ REST API for managing an online bookstore built with Spring Boot, MySQL, Docker,
 
 ## Server Information
 
-- Linux user: douaeS
-- Working directory: /home/douaeS/bookshop
-- GitHub repository: douaeS
+- Linux user: DouaeS
+- Working directory: /home/DouaeS/bookshop
+- GitHub repository: DouaeS
 
 ---
 
